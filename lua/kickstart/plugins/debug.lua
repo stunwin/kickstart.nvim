@@ -1,5 +1,6 @@
 -- debug.lua
 --
+--
 -- Shows how to use the DAP plugin to debug your code.
 --
 -- Primarily focused on configuring the debugger for Go, but can
@@ -23,6 +24,8 @@ return {
 
     -- Add your own debuggers here
     'leoluz/nvim-dap-go',
+    'jbyuki/one-small-step-for-vimkind',
+    -- 'tomblind/local-lua-debugger-vscode',
   },
   config = function()
     local dap = require 'dap'
@@ -42,14 +45,81 @@ return {
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'nlua',
+        -- 'local-lua',
       },
     }
 
+    -- NOTE: This is the osv lua debugger we're trying
+
+    dap.adapters.nlua = function(callback, config)
+      callback { type = 'server', host = config.host or '127.0.0.1', port = config.port or 8086 }
+    end
+    dap.adapters.love2d = {
+      type = 'executable',
+      command = '/bin/love',
+      args = { '--debug' },
+    }
+
+    dap.configurations.lua = {
+
+      {
+        type = 'love2d',
+        request = 'launch',
+        name = 'Debug LÖVE',
+        program = '${workspaceFolder}/main.lua',
+        cwd = '${workspaceFolder}',
+      },
+
+      {
+        type = 'nlua',
+        request = 'attach',
+        name = 'Attach to running Neovim instance',
+      },
+    }
+
+    -- WARN: This is the busted-ass local lua debugger
+
+    -- dap.adapters['local-lua'] = {
+    --   type = 'executable',
+    --   command = 'node',
+    --   args = {
+    --     '/home/stunwin/.local/share/nvim/lazy/local-lua-debugger-vscode/extension/debugAdapter.ts',
+    --   },
+    --   enrich_config = function(config, on_config)
+    --     if not config['extensionPath'] then
+    --       local c = vim.deepcopy(config)
+    --       -- 💀 If this is missing or wrong you'll see
+    --       -- "module 'lldebugger' not found" errors in the dap-repl when trying to launch a debug session
+    --       c.extensionPath = '/home/stunwin/.local/share/nvim/lazy/local-lua-debugger-vscode/'
+    --       on_config(c)
+    --     else
+    --       on_config(config)
+    --     end
+    --   end,
+    -- }
+    --
+    -- dap.configurations.lua = {
+    --   {
+    --     name = 'Current file (local-lua-dbg, lua)',
+    --     type = 'local-lua',
+    --     request = 'launch',
+    --     cwd = '${workspaceFolder}',
+    --     program = {
+    --       lua = 'lua5.1',
+    --       file = '${file}',
+    --     },
+    --     args = {},
+    --   },
+    -- }
     -- Basic debugging keymaps, feel free to change to your liking!
-    vim.keymap.set('n', '<F5>', dap.continue, { desc = 'Debug: Start/Continue' })
-    vim.keymap.set('n', '<F1>', dap.step_into, { desc = 'Debug: Step Into' })
-    vim.keymap.set('n', '<F2>', dap.step_over, { desc = 'Debug: Step Over' })
-    vim.keymap.set('n', '<F3>', dap.step_out, { desc = 'Debug: Step Out' })
+
+    vim.keymap.set('n', '<leader>dd', dap.continue, { desc = 'Debug: Start/Continue' })
+    vim.keymap.set('n', '<leader>de', [[:lua require"osv".run_this()<CR>]], { noremap = true, desc = 'Launch nLua S[e]rver' })
+    vim.keymap.set('n', '<leader>du', [[:lua require"dap.ui.widgets".hover()<CR>]], { noremap = true, desc = 'dap[U]I Hover' })
+    vim.keymap.set('n', '<leader>dj', dap.step_into, { desc = 'Debug: Step Into' })
+    vim.keymap.set('n', '<leader>dl', dap.step_over, { desc = 'Debug: Step Over' })
+    vim.keymap.set('n', '<leader>dk', dap.step_out, { desc = 'Debug: Step Out' })
     vim.keymap.set('n', '<leader>b', dap.toggle_breakpoint, { desc = 'Debug: Toggle Breakpoint' })
     vim.keymap.set('n', '<leader>B', function()
       dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
