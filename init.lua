@@ -93,6 +93,9 @@ vim.opt.scrolloff = 10
 -- apparently necessary for colorizer to play nice with themes
 vim.opt.termguicolors = true
 
+-- set conceal level to work with obsidian plugin
+vim.opt_local.conceallevel = 2
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -153,7 +156,14 @@ end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
 -- [[ Configure and install plugins ]]
---
+-- NOTE: ths is where we're listening for godot to if we need to listen to the language server
+
+local gdproject = io.open(vim.fn.getcwd() .. '/project.godot', 'r')
+if gdproject then
+  io.close(gdproject)
+  vim.fn.serverstart './godothost'
+end
+
 --  To check the current status of your plugins, run
 --    :Lazy
 --
@@ -173,6 +183,9 @@ require('lazy').setup(
     -- keys can be used to configure plugin behavior/loading/etc.
     --
     -- XXX: this is where my pluggies go
+    require 'custom.plugins.obsidian',
+    { 'habamax/vim-godot', event = 'VimEnter' },
+    { 'ThePrimeagen/vim-be-good' },
 
     {
       'ThePrimeagen/harpoon',
@@ -199,6 +212,7 @@ require('lazy').setup(
         require('colorizer').setup()
       end,
     },
+
     --
     --
     --
@@ -540,11 +554,13 @@ require('lazy').setup(
         --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
         --  - settings (table): Override the default settings passed when initializing the server.
         --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+
+        -- NOTE: this is theoretically how we set up godot LSP capabilities, so fingers crossed
+        require('lspconfig').gdscript.setup(capabilities)
         local servers = {
           -- clangd = {},
           -- gopls = {},
           pyright = {},
-
           -- require('lspconfig').pyright.setup {},
           -- rust_analyzer = {},
           -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -622,9 +638,10 @@ require('lazy').setup(
       opts = {
         notify_on_error = false,
         format_on_save = function(bufnr)
-          -- Disable "format_on_save lsp_fallback" for languages that don't
-          -- have a well standardized coding style. You can add additional
-          -- languages here or re-enable it for the disabled ones.
+          -- NOTE: hey we're trying this to disable autoformat. has a matching func down at the bottom
+          if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+            return
+          end
           local disable_filetypes = { c = true, cpp = true }
           return {
             timeout_ms = 500,
@@ -816,7 +833,7 @@ require('lazy').setup(
       'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
       opts = {
-        ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
+        ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'vim', 'vimdoc' },
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = {
@@ -826,7 +843,7 @@ require('lazy').setup(
           --  the list of additional_vim_regex_highlighting and disabled languages for indent.
           additional_vim_regex_highlighting = { 'ruby' },
         },
-        indent = { enable = true, disable = { 'ruby' } },
+        indent = { enable = true, disable = { 'ruby', 'gdscript', 'godot_resource', 'gdshader' } },
       },
       config = function(_, opts)
         -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
@@ -916,8 +933,10 @@ end
 -- NOTE: Harpoon settings are here
 
 --
--- vim.keymap.set('n', '<leader>h', {desc = '[H]arpoon'})
+vim.keymap.set('n', '<leader>h', function() end, { desc = '[H]arpoon' })
+
 --
+
 vim.keymap.set('n', '<leader>hy', function()
   toggle_telescope(harpoon:list())
 end, { desc = 'Open harpoon window' })
@@ -925,18 +944,22 @@ vim.keymap.set('n', '<leader>hh', function()
   harpoon:list():add()
 end, { desc = 'Add Harpoon File' })
 
+vim.keymap.set('n', '<leader>hn', function()
+  harpoon:list():remove()
+end, { desc = 'Remove Harpoon File' })
+
 vim.keymap.set('n', '<leader>j', function()
   harpoon:list():select(1)
-end)
+end, { desc = 'Harpoon File 1' })
 vim.keymap.set('n', '<leader>k', function()
   harpoon:list():select(2)
-end)
+end, { desc = 'Harpoon File 2' })
 vim.keymap.set('n', '<leader>l', function()
   harpoon:list():select(3)
-end)
+end, { desc = 'Harpoon File 3' })
 vim.keymap.set('n', '<leader>;', function()
   harpoon:list():select(4)
-end)
+end, { desc = 'Harpoon File 4' })
 
 -- Toggle previous & next buffers stored within Harpoon list
 vim.keymap.set('n', '<leader>hj', function()
@@ -946,5 +969,23 @@ vim.keymap.set('n', '<leader>hk', function()
   harpoon:list():next()
 end, { desc = 'Next Harpoon File' })
 
+vim.api.nvim_create_user_command('FormatDisable', function(args)
+  if args.bang then
+    -- FormatDisable! will disable formatting just for this buffer
+    vim.b.disable_autoformat = true
+  else
+    vim.g.disable_autoformat = true
+  end
+end, {
+  desc = 'Disable autoformat-on-save',
+  bang = true,
+})
+vim.api.nvim_create_user_command('FormatEnable', function()
+  vim.b.disable_autoformat = false
+  vim.g.disable_autoformat = false
+end, {
+  desc = 'Re-enable autoformat-on-save',
+})
+--test
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
