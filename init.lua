@@ -132,6 +132,28 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- turning off the default bind so that mini surround works
+vim.keymap.set('n', 's', '', { desc = '[S]urround' })
+
+-- Initialize flag to track the state
+local format_enabled = true
+
+-- Function to toggle between FormatEnable and FormatDisable
+local function toggle_format()
+  if format_enabled then
+    vim.cmd 'FormatDisable'
+    format_enabled = false
+    print 'Format Disabled'
+  else
+    vim.cmd 'FormatEnable'
+    format_enabled = true
+    print 'Format Enabled'
+  end
+end
+
+-- Map the <leader>tf keybind to toggle the format
+vim.keymap.set('n', '<leader>tf', toggle_format, { noremap = true, silent = true, desc = '[T]oggle Auto[F]ormatting' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -794,6 +816,7 @@ require('lazy').setup(
 
     { -- Collection of various small independent plugins/modules
       'echasnovski/mini.nvim',
+      version = '*',
       config = function()
         -- Better Around/Inside textobjects
         --
