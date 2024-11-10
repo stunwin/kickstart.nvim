@@ -54,6 +54,9 @@ vim.opt.clipboard = 'unnamedplus'
 -- Enable break indent
 vim.opt.breakindent = true
 
+-- set line break on space as default
+vim.opt.linebreak = true
+
 -- Save undo history
 vim.opt.undofile = true
 
@@ -183,9 +186,8 @@ vim.opt.rtp:prepend(lazypath)
 -- [[ Configure and install plugins ]]
 -- NOTE: ths is where we're listening for godot to if we need to listen to the language server
 
-local gdproject = io.open(vim.fn.getcwd() .. '/project.godot', 'r')
+local gdproject = vim.fn.getcwd() .. '/project.godot'
 if gdproject then
-  io.close(gdproject)
   vim.fn.serverstart './godothost'
 end
 
@@ -865,7 +867,7 @@ require('lazy').setup(
       'nvim-treesitter/nvim-treesitter',
       build = ':TSUpdate',
       opts = {
-        ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'vim', 'vimdoc' },
+        ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'vim', 'vimdoc', 'gdscript', 'godot_resource', 'gdshader' },
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = {
