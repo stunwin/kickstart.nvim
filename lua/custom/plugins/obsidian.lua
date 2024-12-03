@@ -1,7 +1,7 @@
 return {
   'epwalsh/obsidian.nvim',
   version = '*', -- recommended, use latest release instead of latest commit
-  lazy = true,
+  lazy = false,
   ft = 'markdown',
   -- Replace the above line with this if you only want to load obsidian.nvim for markdown files in your vault:
   -- event = {
@@ -40,6 +40,9 @@ return {
     end,
     preferred_link_style = 'wiki',
 
+    follow_url_func = function(url)
+      vim.ui.open(url)
+    end,
     -- Optional, completion of wiki links, local markdown links, and tags using nvim-cmp.
     completion = {
       -- Set to false to disable completion.
