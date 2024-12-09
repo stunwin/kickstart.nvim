@@ -184,12 +184,18 @@ end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
 -- [[ Configure and install plugins ]]
--- NOTE: ths is where we're listening for godot to if we need to listen to the language server
+-- NOTE: ths is where we're checking to see if there is a godot project in the current dir, and if there is we start listening for the server.
+-- WARN: this is broken and starting godot.host in everty directory i open nvim in
 
-local gdproject = vim.fn.getcwd() .. '/project.godot'
+local gdproject = io.open(vim.fn.getcwd() .. '/project.godot', 'r')
 if gdproject then
+  io.close(gdproject)
   vim.fn.serverstart './godothost'
 end
+-- local gdproject = vim.fn.getcwd() .. '/project.godot'
+-- if gdproject then
+--   vim.fn.serverstart './godothost'
+-- end
 
 --  To check the current status of your plugins, run
 --    :Lazy
@@ -205,7 +211,7 @@ require('lazy').setup(
     -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
     'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
-    -- NOTE: Plugins can also be added by using a table,
+    -- NOTE: Plugins can also be added by using a table,init
     -- with the first argument being the link and the following
     -- keys can be used to configure plugin behavior/loading/etc.
     --
@@ -213,7 +219,36 @@ require('lazy').setup(
     require 'custom.plugins.obsidian',
     { 'habamax/vim-godot', event = 'VimEnter' },
     { 'ThePrimeagen/vim-be-good' },
-
+    {
+      'tris203/precognition.nvim',
+      --event = "VeryLazy",
+      opts = {
+        startVisible = true,
+        -- showBlankVirtLine = true,
+        -- highlightColor = { link = "Comment" },
+        hints = {
+          Caret = { text = '^', prio = 2 },
+          Dollar = { text = '$', prio = 1 },
+          MatchingPair = { text = '%', prio = 5 },
+          Zero = { text = '0', prio = 1 },
+          w = { text = 'w', prio = 10 },
+          b = { text = 'b', prio = 9 },
+          e = { text = 'e', prio = 8 },
+          W = { text = 'W', prio = 7 },
+          B = { text = 'B', prio = 6 },
+          E = { text = 'E', prio = 5 },
+        },
+        gutterHints = {
+          G = { text = 'G', prio = 10 },
+          gg = { text = 'gg', prio = 9 },
+          PrevParagraph = { text = '{', prio = 8 },
+          NextParagraph = { text = '}', prio = 8 },
+        },
+        -- disabled_fts = {
+        --     "startify",
+        -- },
+      },
+    },
     {
       'ThePrimeagen/harpoon',
       branch = 'harpoon2',
@@ -895,7 +930,6 @@ require('lazy').setup(
         --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
       end,
     },
-
     -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
     -- init.lua. If you want these files, they are in the repository, so you can just download them and
     -- place them in the correct locations.
@@ -964,6 +998,10 @@ local function toggle_telescope(harpoon_files)
     })
     :find()
 end
+--
+--
+--
+--
 -- NOTE: Harpoon settings are here
 
 --
