@@ -137,6 +137,7 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- turning off the default bind so that mini surround works
 vim.keymap.set('n', 's', '', { desc = '[S]urround' })
+vim.keymap.set('n', '<leader>//', ':noh<CR>', { desc = '[S]urround' })
 
 -- NOTE: this lil chunk here is to disable autoformatting when working on files with
 -- weirdly-formatted arrays like keymaps
@@ -444,7 +445,7 @@ require('lazy').setup(
           })
         end, { desc = '[/] Fuzzily search in current buffer' })
 
-        -- It's also possible to pass additional configuration options.
+        -- It's also possible to pass additional configuration options.init
         --  See `:help telescope.builtin.live_grep()` for information about particular keys
         vim.keymap.set('n', '<leader>s/', function()
           builtin.live_grep {
@@ -457,6 +458,14 @@ require('lazy').setup(
         vim.keymap.set('n', '<leader>sn', function()
           builtin.find_files { cwd = vim.fn.stdpath 'config' }
         end, { desc = '[S]earch [N]eovim files' })
+
+        vim.keymap.set('n', '<leader>so', function()
+          builtin.find_files { cwd = '~/Obsidian/vimvault' }
+        end, { desc = '[S]earch [o]bsidian files' })
+
+        vim.keymap.set('n', '<leader>sO', function()
+          builtin.live_grep { cwd = '~/Obsidian/vimvault' }
+        end, { desc = '[S]earch [O]bsidian contents' })
       end,
     },
 
@@ -942,7 +951,7 @@ require('lazy').setup(
     require 'kickstart.plugins.debug',
     require 'kickstart.plugins.indent_line',
     require 'kickstart.plugins.lint',
-    require 'kickstart.plugins.autopairs',
+    -- require 'kickstart.plugins.autopairs',
     require 'kickstart.plugins.neo-tree',
     -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
