@@ -8,8 +8,8 @@ return {
     -- refer to the configuration section below
     bigfile = { enabled = false },
     dashboard = { enabled = true },
-    indent = { enabled = true },
-    input = { enabled = true },
+    indent = { enabled = false },
+    input = { enabled = false },
     notifier = { enabled = true },
     quickfile = { enabled = false },
     scroll = { enabled = true },
