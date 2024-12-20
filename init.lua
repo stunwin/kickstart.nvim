@@ -217,13 +217,12 @@ require('lazy').setup(
     -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
     'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
-    -- NOTE: Plugins can also be added by using a table,init
-    -- with the first argument being the link and the following
-    -- keys can be used to configure plugin behavior/loading/etc.
     --
     -- XXX: this is where my pluggies go
     require 'custom.plugins.obsidian',
     require 'custom.plugins.snacks',
+    require 'custom.plugins.harpoon',
+
     { 'habamax/vim-godot', event = 'VimEnter' },
     { 'ThePrimeagen/vim-be-good' },
     {
@@ -258,11 +257,6 @@ require('lazy').setup(
       keys = {
         { '<leader>tp', '<cmd>:Precognition toggle<cr>', desc = '[T]oggle [P]recognition' },
       },
-    },
-    {
-      'ThePrimeagen/harpoon',
-      branch = 'harpoon2',
-      dependencies = { 'nvim-lua/plenary.nvim' },
     },
 
     {
@@ -755,8 +749,6 @@ require('lazy').setup(
     },
   }
 )
-local harpoon = require 'harpoon'
-harpoon:setup {}
 
 -- basic telescope configuration
 local conf = require('telescope.config').values
@@ -777,48 +769,6 @@ local function toggle_telescope(harpoon_files)
     })
     :find()
 end
---
---
---
---
--- NOTE: Harpoon settings are here
-
---
-vim.keymap.set('n', '<leader>h', function() end, { desc = '[H]arpoon' })
-
---
-
-vim.keymap.set('n', '<leader>hy', function()
-  toggle_telescope(harpoon:list())
-end, { desc = 'Open harpoon window' })
-vim.keymap.set('n', '<leader>hh', function()
-  harpoon:list():add()
-end, { desc = 'Add Harpoon File' })
-
-vim.keymap.set('n', '<leader>hn', function()
-  harpoon:list():remove()
-end, { desc = 'Remove Harpoon File' })
-
-vim.keymap.set('n', '<leader>j', function()
-  harpoon:list():select(1)
-end, { desc = 'Harpoon File 1' })
-vim.keymap.set('n', '<leader>k', function()
-  harpoon:list():select(2)
-end, { desc = 'Harpoon File 2' })
-vim.keymap.set('n', '<leader>l', function()
-  harpoon:list():select(3)
-end, { desc = 'Harpoon File 3' })
-vim.keymap.set('n', '<leader>;', function()
-  harpoon:list():select(4)
-end, { desc = 'Harpoon File 4' })
-
--- Toggle previous & next buffers stored within Harpoon list
-vim.keymap.set('n', '<leader>hj', function()
-  harpoon:list():prev()
-end, { desc = 'Previous Harpoon File' })
-vim.keymap.set('n', '<leader>hk', function()
-  harpoon:list():next()
-end, { desc = 'Next Harpoon File' })
 
 vim.api.nvim_create_user_command('FormatDisable', function(args)
   if args.bang then
@@ -837,6 +787,4 @@ vim.api.nvim_create_user_command('FormatEnable', function()
 end, {
   desc = 'Re-enable autoformat-on-save',
 })
---test
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
+--
