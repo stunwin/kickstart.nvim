@@ -19,9 +19,13 @@
 =====================================================================
 =====================================================================
 
+
+
+
     - :help lua-guide
     - (or HTML version): https://neovim.io/doc/user/lua-guide.html
 --]]
+local ssh = os.getenv 'SSH_CONNECTION'
 
 -- Set <space> as the leader key
 -- See `:help mapleader`
@@ -47,7 +51,11 @@ vim.opt.showmode = false
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.opt.clipboard = 'unnamedplus'
+if ssh ~= nil then
+  vim.opt.clipboard = 'unnamed'
+else
+  vim.opt.clipboard = 'unnamedplus'
+end
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -121,22 +129,10 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagn
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
--- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
--- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
--- is not what someone will guess without a bit more experience.
---
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
--- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
-
--- Keybinds to make split navigation easier.
---  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
@@ -146,11 +142,11 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- turning off the default bind so that mini surround works
 vim.keymap.set('n', 's', '', { desc = '[S]urround' })
-vim.keymap.set('n', '<leader>//', ':noh<CR>', { desc = '[S]urround' })
+vim.keymap.set('n', '<leader>//', ':noh<CR>', { desc = 'Unhighlight search[//]' })
 
 -- NOTE: this lil chunk here is to disable autoformatting when working on files with
 -- weirdly-formatted arrays like keymaps
---
+
 -- Initialize flag to track the state
 local format_enabled = true
 
@@ -168,8 +164,11 @@ local function toggle_format()
 end
 
 vim.keymap.set('n', '<leader>t', '', { desc = '[T]oggles' })
--- Map the <leader>tf keybind to toggle the format
 vim.keymap.set('n', '<leader>tf', toggle_format, { noremap = true, silent = true, desc = '[T]oggle Auto[F]ormatting' })
+
+vim.keymap.set('n', 'zz', 'za', { noremap = true, silent = true, desc = 'Toggle fold under cursor' })
+
+--#ADDKEYBINDSHERE
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -183,6 +182,19 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank()
   end,
+})
+
+-- auto save and load folds
+-- NOTE: may want to constrain this to .md files only
+vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+  pattern = { '*.*' },
+  desc = 'save view (folds), when closing file',
+  command = 'mkview',
+})
+vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
+  pattern = { '*.*' },
+  desc = 'load view (folds), when opening file',
+  command = 'silent! loadview',
 })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -222,7 +234,11 @@ require('lazy').setup(
     require 'custom.plugins.obsidian',
     require 'custom.plugins.snacks',
     require 'custom.plugins.harpoon',
-
+    require 'custom.plugins.yazi',
+    {
+      'jim-at-jibba/micropython.nvim',
+      dependencies = { 'akinsho/toggleterm.nvim', 'stevearc/dressing.nvim' },
+    },
     { 'habamax/vim-godot', event = 'VimEnter' },
     { 'ThePrimeagen/vim-be-good' },
     {
@@ -716,7 +732,6 @@ require('lazy').setup(
     require 'kickstart.plugins.indent_line',
     require 'kickstart.plugins.lint',
     -- require 'kickstart.plugins.autopairs',
-    require 'kickstart.plugins.neo-tree',
     -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
     -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -750,6 +765,9 @@ require('lazy').setup(
   }
 )
 
+-- micropython plugin stuff goes here under M
+vim.keymap.set('n', '<leader>mr', require('micropython_nvim').run)
+--
 -- basic telescope configuration
 local conf = require('telescope.config').values
 local function toggle_telescope(harpoon_files)

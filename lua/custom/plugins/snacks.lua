@@ -12,7 +12,7 @@ return {
     input = { enabled = false },
     notifier = { enabled = true },
     quickfile = { enabled = false },
-    scroll = { enabled = true },
+    scroll = { enabled = false },
     statuscolumn = { enabled = false },
     words = { enabled = true },
   },
