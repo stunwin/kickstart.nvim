@@ -51,11 +51,54 @@ vim.opt.showmode = false
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-if ssh ~= nil then
-  vim.opt.clipboard = 'unnamed'
-else
-  vim.opt.clipboard = 'unnamedplus'
-end
+
+-- vim.g.clipboard = {
+--   name = 'OSC 52',
+--   copy = {
+--     ['+'] = require('vim.ui.clipboard.osc52').copy,
+--     ['*'] = require('vim.ui.clipboard.osc52').copy,
+--   },
+--   paste = {
+--     ['w'] = require('vim.ui.clipboard.osc52').paste,
+--     ['*'] = require('vim.ui.clipboard.osc52').paste,
+--   },
+-- }
+-- vim.g.clipboard = {
+-- if ssh ~= nil then
+-- vim.opt.clipboard = 'unnamed'
+-- else
+vim.opt.clipboard = 'unnamedplus'
+-- end
+-- vim.g.clipboard = {
+--   name = 'copyq',
+--   copy = {
+--     ['+'] = 'copyq copy',
+--     ['*'] = 'copyq copy',
+--   },
+--   paste = {
+--     ['+'] = 'copyq paste',
+--     ['*'] = 'copyq paste',
+--   },
+--   cache_enabled = 1,
+-- }
+-- local session_type = os.getenv 'XDG_SESSION_TYPE'
+--
+-- if session_type == 'wayland' then
+--   vim.opt.clipboard = 'unnamedplus'
+-- elseif session_type == 'x11' then
+--   vim.g.clipboard = {
+--     name = 'copyq',
+--     copy = {
+--       ['+'] = 'copyq copy',
+--       ['*'] = 'copyq copy',
+--     },
+--     paste = {
+--       ['+'] = 'copyq paste',
+--       ['*'] = 'copyq paste',
+--     },
+--     cache_enabled = 1,
+--   }
+-- end
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -103,7 +146,7 @@ vim.opt.scrolloff = 10
 vim.opt.termguicolors = true
 
 -- set conceal level to work with obsidian plugin
-vim.opt_local.conceallevel = 2
+vim.opt.conceallevel = 2
 
 -- lsp warnings
 vim.diagnostic.config {
@@ -167,6 +210,45 @@ vim.keymap.set('n', '<leader>t', '', { desc = '[T]oggles' })
 vim.keymap.set('n', '<leader>tf', toggle_format, { noremap = true, silent = true, desc = '[T]oggle Auto[F]ormatting' })
 
 vim.keymap.set('n', 'zz', 'za', { noremap = true, silent = true, desc = 'Toggle fold under cursor' })
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.keymap.set('n', 'j', 'gj')
+    vim.keymap.set('n', 'k', 'gk')
+  end,
+})
+
+vim.keymap.set('n', '<leader>rp', function()
+  -- Get the current buffer number and name
+  local original_buf = vim.api.nvim_get_current_buf()
+  local bufname = vim.fn.expand '%'
+
+  -- Find an open terminal buffer
+  local term_buf = nil
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_get_option(buf, 'buftype') == 'terminal' then
+      term_buf = buf
+      break
+    end
+  end
+
+  -- If no terminal buffer is found, open one
+  if not term_buf then
+    vim.cmd 'split | terminal' -- Opens a terminal in a split
+  else
+    -- Switch to the terminal buffer
+    vim.api.nvim_set_current_buf(term_buf)
+  end
+
+  -- Send the command to execute the Python file
+  vim.api.nvim_chan_send(vim.b.terminal_job_id, 'py ' .. bufname .. '\n')
+
+  -- Switch back to the original buffer
+  vim.defer_fn(function()
+    vim.api.nvim_chan_send(vim.b.terminal_job_id, '<Esc><Esc>CTRL-W_p')
+  end, 100) -- Small delay to ensure the command executes in the terminal
+end, { desc = 'Run Python file in terminal and return to buffer', noremap = true, silent = true })
 
 --#ADDKEYBINDSHERE
 
@@ -535,7 +617,16 @@ require('lazy').setup(
         require('lspconfig').gdscript.setup(capabilities)
         local servers =
           {
-            pyright = {},
+            pyright = {
+              settings = {
+                python = {
+                  diagnostics = {
+                    disable = { 'reportArgumentType', 'reportAssignmentType' },
+                  },
+                },
+              },
+            },
+
             lua_ls = {
               settings = {
                 Lua = {
@@ -606,6 +697,7 @@ require('lazy').setup(
           python = { 'black' },
           markdown = { 'markdownlint' },
           gdscript = { 'gdformat' },
+          json = { 'fixjson' },
         },
       },
     },
@@ -624,7 +716,7 @@ require('lazy').setup(
         local cmp = require 'cmp'
 
         cmp.setup {
-          completion = { completeopt = 'menu,menuone,noinsert' },
+          completion = { completeopt = 'menu,menuone,noselect' },
 
           -- No, but seriously. Please read `:help ins-completion`, it is really good!
           mapping = cmp.mapping.preset.insert {
