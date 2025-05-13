@@ -25,6 +25,10 @@
     - :help lua-guide
     - (or HTML version): https://neovim.io/doc/user/lua-guide.html
 --]]
+--
+--
+--
+
 local ssh = os.getenv 'SSH_CONNECTION'
 
 -- Set <space> as the leader key
@@ -158,7 +162,8 @@ vim.diagnostic.config {
 }
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
-
+-- require('lilguys').setup {}
+-- vim.keymap.set({ 'n', 'v' }, '<leader>.', require('gleampipes').toggle_pipe, { desc = 'gleam pipes' })
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -313,49 +318,22 @@ require('lazy').setup(
 
     --
     -- XXX: this is where my pluggies go
+    require 'custom.plugins.autotag',
     require 'custom.plugins.obsidian',
     require 'custom.plugins.snacks',
     require 'custom.plugins.harpoon',
     require 'custom.plugins.yazi',
+    require 'custom.plugins.lilguys',
+    {
+      'dundalek/bloat.nvim',
+      cmd = 'Bloat',
+    },
     {
       'jim-at-jibba/micropython.nvim',
       dependencies = { 'akinsho/toggleterm.nvim', 'stevearc/dressing.nvim' },
     },
     { 'habamax/vim-godot', event = 'VimEnter' },
     { 'ThePrimeagen/vim-be-good' },
-    {
-      'tris203/precognition.nvim',
-      --event = "VeryLazy",
-      opts = {
-        startVisible = false,
-        -- showBlankVirtLine = true,
-        -- highlightColor = { link = "Comment" },
-        hints = {
-          Caret = { text = '^', prio = 2 },
-          Dollar = { text = '$', prio = 1 },
-          MatchingPair = { text = '%', prio = 5 },
-          Zero = { text = '0', prio = 1 },
-          w = { text = 'w', prio = 10 },
-          b = { text = 'b', prio = 9 },
-          e = { text = 'e', prio = 8 },
-          W = { text = 'W', prio = 7 },
-          B = { text = 'B', prio = 6 },
-          E = { text = 'E', prio = 5 },
-        },
-        gutterHints = {
-          G = { text = 'G', prio = 10 },
-          gg = { text = 'gg', prio = 9 },
-          PrevParagraph = { text = '{', prio = 8 },
-          NextParagraph = { text = '}', prio = 8 },
-        },
-        -- disabled_fts = {
-        --     "startify",
-        -- },
-      },
-      keys = {
-        { '<leader>tp', '<cmd>:Precognition toggle<cr>', desc = '[T]oggle [P]recognition' },
-      },
-    },
 
     {
       'S1M0N38/love2d.nvim',
@@ -613,6 +591,9 @@ require('lazy').setup(
         -- add autocomplete capes for cmp or blink
         capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+        -- manually adding gleam LSP because it's not in mason
+        require('lspconfig').gleam.setup {}
+
         -- NOTE: this is theoretically how we set up godot LSP capabilities, so fingers crossed
         require('lspconfig').gdscript.setup(capabilities)
         local servers =
@@ -665,6 +646,7 @@ require('lazy').setup(
         }
       end,
     },
+    --
 
     { -- Autoformat
       'stevearc/conform.nvim',
@@ -775,6 +757,7 @@ require('lazy').setup(
         end
         require('mini.move').setup()
         require('mini.jump2d').setup()
+        require('mini.files').setup()
         -- ... and there is more!
         --  Check out: https://github.com/echasnovski/mini.nvim
       end,
